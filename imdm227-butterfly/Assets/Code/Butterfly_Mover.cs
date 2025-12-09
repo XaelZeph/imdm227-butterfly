@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.Assertions.Must;
 using UnityEngine.UIElements;
 
@@ -7,12 +8,13 @@ public class Butterfly_Mover : MonoBehaviour
 {
     // stuff for camera
     const int waitWidth = 16;
-    private float brightness_threshold = 10f; 
+    public float threshold = 10f; 
 
     public int width = 640;
     public int height = 360;
 
     Color32[] pixels;
+    Color32[] old_pixels;
     WebCamTexture cam;
     Texture2D tex;
 
@@ -25,6 +27,13 @@ public class Butterfly_Mover : MonoBehaviour
     public float theta;
     public float radius = 16f;
 
+    private float max_offset_x = 8f;
+    private float offset_radius = .8f;
+    private float max_offset_y = 4.5f;
+
+
+    public int numlevels = 16;
+
     Action update = () => { };
     void Start()
     {
@@ -36,6 +45,8 @@ public class Butterfly_Mover : MonoBehaviour
         cam.Play();
         int w = cam.width;
         Debug.Log($"Width = {width}, Height = {height}");
+
+        cam.GetPixels32(old_pixels);
     }
 
     // Update is called once per frame
@@ -52,6 +63,7 @@ public class Butterfly_Mover : MonoBehaviour
             height = cam.height;
             Debug.Log($"Width = {width}, Height = {height}");
             pixels = new Color32[cam.width * cam.height];
+            old_pixels = new Color32[cam.width * cam.height];
             tex = new Texture2D(cam.width, cam.height, TextureFormat.RGBA32, false);
             Renderer renderer = GetComponent<Renderer>();
             renderer.material.mainTexture = tex;
@@ -66,59 +78,56 @@ public class Butterfly_Mover : MonoBehaviour
 
     void CamIsOn()
     {
+        
         if (cam.didUpdateThisFrame)
         {
             cam.GetPixels32(pixels);
 
             // for (int i = 0; i < pixels.Length; ++i)
             // {
-            //     // Don't be so negative.
+            // //     // Don't be so negative.
 
-            //     // pixels[i].r = (byte)(255 - pixels[i].r);
-            //     // pixels[i].g = (byte)(255 - pixels[i].g);
-            //     // pixels[i].b = (byte)(255 - pixels[i].b);
-
-
-            //     // Peter Maxx is back!
-
-            //     // int numLevels = 3;
-            //     // float divisor = 255f / numLevels;
-
-            //     // pixels[i].r = (byte)((int)(pixels[i].r / divisor + 0.5f) * divisor + 0.5f);
-            //     // pixels[i].g = (byte)((int)(pixels[i].g / divisor + 0.5f) * divisor + 0.5f);
-            //     // pixels[i].b = (byte)((int)(pixels[i].b / divisor + 0.5f) * divisor + 0.5f);
+            // //     // pixels[i].r = (byte)(255 - pixels[i].r);
+            // //     // pixels[i].g = (byte)(255 - pixels[i].g);
+            // //     // pixels[i].b = (byte)(255 - pixels[i].b);
 
 
-            //     // The '60s were a strange time...
+            // //     // Peter Maxx is back!
 
-            //     // pixels[i].r = (byte)(pixels[i].r * 4 % 256);
-            //     // pixels[i].g = (byte)(pixels[i].g * 4 % 256);
-            //     // pixels[i].b = (byte)(pixels[i].b * 4 % 256);
+            // //     // int numLevels = 3;
+            // //     // float divisor = 255f / numLevels;
+
+            // //     // pixels[i].r = (byte)((int)(pixels[i].r / divisor + 0.5f) * divisor + 0.5f);
+            // //     // pixels[i].g = (byte)((int)(pixels[i].g / divisor + 0.5f) * divisor + 0.5f);
+            // //     // pixels[i].b = (byte)((int)(pixels[i].b / divisor + 0.5f) * divisor + 0.5f);
 
 
-            //     // Zebra vision.
+            // //     // The '60s were a strange time...
 
-            //     int total = (pixels[i].r + pixels[i].g + pixels[i].b) / 3;
-            //     int numlevels = 16;
+            // //     // pixels[i].r = (byte)(pixels[i].r * 4 % 256);
+            // //     // pixels[i].g = (byte)(pixels[i].g * 4 % 256);
+            // //     // pixels[i].b = (byte)(pixels[i].b * 4 % 256);
+
+
+            // //     // Zebra vision.
+
+            //     int total = (old_pixels[i].r + old_pixels[i].g + old_pixels[i].b) / 3;
             //     int level = total / (256 / numlevels);
 
             //     if (level > brightness_threshold)
             //     {
-            //         pixels[i].r = pixels[i].g = pixels[i].b = 255;
+            //         old_pixels[i].r = old_pixels[i].g = old_pixels[i].b = 255;
             //     }
             //     else
             //     {
-            //         pixels[i].r = pixels[i].g = pixels[i].b = 0;
+            //         old_pixels[i].r = old_pixels[i].g = old_pixels[i].b = 0;
             //     }
             // }
 
-            // tex.SetPixels32(pixels);
-            // tex.Apply();
-
             // pixels = old_pixels;
 
-            int cur_col = (int) ((butterfly.transform.position.x + 8) / 16 * width);
-            int cur_row = (int) ((butterfly.transform.position.y + 4) / 8 * height);
+            int cur_col = (int) ((butterfly.transform.position.x + max_offset_x) / (max_offset_x * 2) * width);
+            int cur_row = (int) ((butterfly.transform.position.y + max_offset_y) / (max_offset_y * 2) * height);
 
             // Remember polar: x = r*cos(theta) ; y = r*sin(theta)  
             for (int pts = 0; pts < num_points; pts ++)
@@ -126,46 +135,102 @@ public class Butterfly_Mover : MonoBehaviour
                 int check_col = (int) (radius * (float) Mathf.Cos(theta * pts)) + cur_col; 
                 int check_row = (int) (radius * (float) Mathf.Sin(theta * pts)) + cur_row;
 
-                if (check_col >= cam.width)
-                {
-                    check_col = cam.width - 1;
-                }
-                if (check_row >= cam.height)
-                {
-                    check_row = cam.height - 1;
-                }
+                // if (check_col >= cam.width)
+                // {
+                //     check_col = (int) (cam.width - (radius * 2) - 1);
+                // }
+                // if (check_col <= 0)
+                // {
+                //     check_col = (int) (radius * 2) + 1;
+                // }
+                // if (check_row >= cam.height)
+                // {
+                //     check_row = (int) (cam.height - radius - 1);
+                // }
+                // if(check_row <= 0)
+                // {
+                //     check_row = (int) (radius + 1);
+                // }
 
                 
                 int index = check_row * width + check_col;
                 // fix this, it's getting out of bounds right now
-                int total = (pixels[index].r + pixels[index].g + pixels[index].b) / 3;
-                int numlevels = 16;
-                int level = total / (256 / numlevels);
+                // int total = (pixels[index].r + pixels[index].g + pixels[index].b) / 3;
+                
+                // int level = total / (256 / numlevels);
+                int old_avg = (old_pixels[index].r + old_pixels[index].g + old_pixels[index].b)/ 3;
+                int old_level = old_avg / (256 / numlevels);
+                int new_avg = (pixels[index].r + pixels[index].g + pixels[index].b) / 3;
+                int new_level = new_avg / (256 / numlevels);
+
+                Debug.Log(old_level - new_level);
+
+
+
+                // int total = pixels[index].r + pixels[index].g + pixels[index].b;
 
                 // draws a red circle just in case
                 pixels[index].r = 255;
                 pixels[index].b = 0;
                 pixels[index].g = 0;
+                // Debug.Log("has brightnes: " + new_total);
 
-                if (level > brightness_threshold)
+                if (new_level > (old_level + threshold) || new_level < (old_level - threshold))
                 {
                     // Debug.Log("has brightnes: " + pts + " index: " + index);
+                    // Debug.Log("has brightnes: " + total);
 
                     // Push in the opposite direction
-                    float new_x = (float)check_col/width * 16 - 8;
-                    float new_y = (float)check_row/height * 8 - 4;
+                    float new_x = (float)check_col/width * (max_offset_x *2) - max_offset_x;
+                    float new_y = (float)check_row/height * (max_offset_y * 2) - max_offset_y;
 
-                    Debug.Log("direction x:" + new_x);
-                    Debug.Log("direction y: " + new_y);
 
                     Vector3 hand_pos = new Vector3(new_x, new_y, 0);
                     Vector3 direction = butterfly.transform.position - hand_pos;
-                    butterfly.transform.position += direction * speed * Time.deltaTime;
+                    Vector3 new_position = butterfly.transform.position + direction * speed * Time.deltaTime;
+                    // if (new_position.x > (max_offset_x - offset_radius_x))
+                    // {
+                    //     new_position.x = max_offset_x - offset_radius_x;
+                    // }
+                    // if (new_position.x < ((max_offset_x - offset_radius_x) * -1))
+                    // {
+                    //     new_position.x = (max_offset_x - offset_radius_x) * -1;
+                    // }
+                    // if (new_position.y > max_offset_y - offset_radius_y)
+                    // {
+                    //     new_position.y = max_offset_y - offset_radius_y;
+                    // }
+                    // if (new_position.y < ((max_offset_y -offset_radius_y) * -1))
+                    // {
+                    //     new_position.y = (max_offset_y-offset_radius_y) * -1;
+                    // }
+                    if (new_position.x > (max_offset_x - offset_radius))
+                    {
+                        new_position.x = max_offset_x - offset_radius;
+                    }
+                    if (new_position.x < ((max_offset_x - offset_radius) * -1))
+                    {
+                        new_position.x = (max_offset_x - offset_radius) * -1;
+                    }
+                    if (new_position.y > max_offset_y - offset_radius)
+                    {
+                        new_position.y = max_offset_y - offset_radius;
+                    }
+                    if (new_position.y < ((max_offset_y - offset_radius) * -1))
+                    {
+                        new_position.y = (max_offset_y - offset_radius) * -1;
+                    }
+                    Debug.Log("direction x:" + new_position.x);
+                    Debug.Log("direction y: " + new_position.y);
+                    butterfly.transform.position = new_position;
                 }
             }
 
             tex.SetPixels32(pixels);
             tex.Apply();
+
+            // tex.SetPixels32(pixels);
+            // tex.Apply();
 
             // pixels = old_pixels;
         }
