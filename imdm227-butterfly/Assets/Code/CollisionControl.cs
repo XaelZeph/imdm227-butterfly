@@ -40,8 +40,11 @@ public class CollisionControl : MonoBehaviour
                 startX = transform.position.x;
                 startY = transform.position.y;
                 startZ = transform.position.z;
-            } else {
-                //Debug.Log("win");
+             } 
+             else {
+                //for this to work you need to add the scenes to the current build,
+                //make sure the maze levels are in order because this triggers the 
+                //scene with the next index to appear
                 canvas.SetActive(true);
             }
 
