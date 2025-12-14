@@ -65,10 +65,11 @@ public class Butterfly_Mover : MonoBehaviour
             tex.Apply();
             
             update = CamIsOn;
+            Debug.Log("YIPPEE");
         }
         else
         {
-            Debug.Log("God hates us");
+            Debug.Log("nope");
         }
     }
 
@@ -98,10 +99,11 @@ public class Butterfly_Mover : MonoBehaviour
     {
 
         // reset the background every 100 frames
-        // if (Time.deltaTime % 20 == 0)
-        // {
-        //     update = GetFrameOne;
-        // }
+        Debug.Log(Time.time);
+        if (((int)Time.time) % 5 == 0)
+        {
+            update = GetFrameOne;
+        }
 
         if (cam.didUpdateThisFrame)
         {
@@ -197,6 +199,10 @@ public class Butterfly_Mover : MonoBehaviour
 
                 int difference = Math.Abs(old_avg - new_avg);
 
+                int red_diff = Math.Abs(old_pixels[index].r - pixels[index].r);
+                int green_diff = Math.Abs(old_pixels[index].g - pixels[index].g);
+                int blue_diff = Math.Abs(old_pixels[index].b - pixels[index].b);
+
                 // Debug.Log("old_level: " +old_avg + " new_level: " + new_avg + " difference: " +  difference);
 
 
@@ -209,7 +215,7 @@ public class Butterfly_Mover : MonoBehaviour
                 pixels[index].g = 0;
                 // Debug.Log("has brightnes: " + new_total);
 
-                if (difference > threshold)
+                if (red_diff > threshold || green_diff > threshold || blue_diff > threshold)
                 {
                     // Debug.Log("has brightnes: " + pts + " index: " + index);
                     // Debug.Log("has brightnes: " + total);
