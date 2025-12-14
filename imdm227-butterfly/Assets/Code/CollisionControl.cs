@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Audio;
 using UnityEngine.SceneManagement;
 
 public class CollisionControl : MonoBehaviour
@@ -12,19 +13,25 @@ public class CollisionControl : MonoBehaviour
     float startY;
     float startZ;
 
+    public AudioClip hit1;
+    public AudioClip hit2;
+    public AudioClip hit3;
+    public AudioClip hit4;
+    public AudioClip win;
+
+
     public GameObject canvas;
+    private AudioSource source;
 
     void Start()
     {
+        
+        source = GetComponent<AudioSource>();
         canvas.SetActive(false);
         startX = transform.position.x;
         startY = transform.position.y;
         startZ = transform.position.z;
 
-    }
-    void Update()
-    {
-        
     }
 
     void OnCollisionEnter(Collision other)
@@ -32,6 +39,7 @@ public class CollisionControl : MonoBehaviour
         //Debug.Log("hit");
         if (other.gameObject.tag == "Win")
         {
+            source.PlayOneShot(win, 1.0f);
             if (SceneManager.GetActiveScene().buildIndex + 1 < SceneManager.sceneCountInBuildSettings)
             {
                 //change scene
@@ -56,5 +64,27 @@ public class CollisionControl : MonoBehaviour
             transform.position = new Vector3(startX, startY, startZ); 
 
         }
+
+        if (other.gameObject.tag == "wall")
+        {
+            int rand = Random.Range(1, 5); 
+            if (rand == 1)
+            {
+                source.PlayOneShot(hit1, 1.0f);
+            } 
+            else if (rand == 2)
+            {
+                source.PlayOneShot(hit2, 1.0f);
+            }
+            else if (rand == 3)
+            {
+                source.PlayOneShot(hit3, 1.0f);
+            }
+            else if (rand == 4)
+            {
+                source.PlayOneShot(hit4, 1.0f);
+            }
+        }
+
     }
 }
