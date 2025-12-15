@@ -17,8 +17,8 @@ public class BtnManager : MonoBehaviour
     void Start()
     {
         SceneManager.activeSceneChanged += ChangedActiveScene;
-        // GameObject start_thing = GameObject.FindGameObjectWithTag("start");
-        startX = butterfly.transform.position.x;
+        //store initial butterfly position
+        startX = butterfly.transform.position.x;  
         startY = butterfly.transform.position.y;
         startZ = butterfly.transform.position.z;
 
@@ -36,15 +36,15 @@ public class BtnManager : MonoBehaviour
             GameObject btn = collider.gameObject;
             Debug.Log(btn.name);
 
-            if (btn == resetBtn)
+            if (btn == resetBtn) //did mouse click on button?
             {
                 Debug.Log("trasnformed: " + startX + " " + startY + " " + startZ);
-                butterfly.transform.position = new Vector3(startX, startY, startZ); 
+                butterfly.transform.position = new Vector3(startX, startY, startZ);   //reset position
             }
         }
     }
-    private void ChangedActiveScene(Scene current, Scene next)
+    private void ChangedActiveScene(Scene current, Scene next) //activates when scene change is detected
     {
-        butterfly.transform.position = new Vector3(startX, startY, startZ);
+        butterfly.transform.position = new Vector3(startX, startY, startZ); //get new position
     }
 }
