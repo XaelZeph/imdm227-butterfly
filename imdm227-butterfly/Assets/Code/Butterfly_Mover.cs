@@ -56,6 +56,8 @@ public class Butterfly_Mover : MonoBehaviour
         update();
     }
 
+    // gets the background frame, which we use to compare to see
+    // changes in current frame
     void GetFrameOne()
     {
         if (cam.didUpdateThisFrame)
@@ -98,7 +100,7 @@ public class Butterfly_Mover : MonoBehaviour
     void CamIsOn()
     {
 
-        // reset the background every 100 frames
+        // reset the background every 5 seconds
         Debug.Log(Time.time);
         if (((int)Time.time) % 5 == 0)
         {
@@ -165,31 +167,29 @@ public class Butterfly_Mover : MonoBehaviour
                 int check_col = (int) (radius * (float) Mathf.Cos(theta * pts)) + cur_col; 
                 int check_row = (int) (radius * (float) Mathf.Sin(theta * pts)) + cur_row;
 
+
+                // in case the butterfly does move too far in unity, does not cause out of bounds error
+                // instead col/row is just set to max
                 if (check_col >= cam.width-1)
                 {
-                    // check_col = (int) (cam.width - (radius * 2) - 1);
                     check_col = cam.width-1;
                 }
                 if (check_col <= 0)
                 {
-                    // check_col = (int) (radius * 2) + 1;
                     check_col = 0;
                 }
                 if (check_row >= cam.height-1)
                 {
-                    // check_row = (int) (cam.height - radius - 1);
                     check_row = cam.height-1;
                 }
                 if(check_row <= 0)
                 {
-                    // check_row = (int) (radius + 1);
                     check_row = 0;
                 }
 
                 
+                //
                 int index = check_row * width + check_col;
-                // fix this, it's getting out of bounds right now
-                // int total = (pixels[index].r + pixels[index].g + pixels[index].b) / 3;
                 
                 // int level = total / (256 / numlevels);
                 int old_avg = (old_pixels[index].r + old_pixels[index].g + old_pixels[index].b)/ 3;
@@ -197,11 +197,16 @@ public class Butterfly_Mover : MonoBehaviour
                 int new_avg = (pixels[index].r + pixels[index].g + pixels[index].b) / 3;
                 // int new_level = new_avg / (256 / numlevels);
 
+                // averaged bightness
                 int difference = Math.Abs(old_avg - new_avg);
 
+                // color difference
                 int red_diff = Math.Abs(old_pixels[index].r - pixels[index].r);
                 int green_diff = Math.Abs(old_pixels[index].g - pixels[index].g);
                 int blue_diff = Math.Abs(old_pixels[index].b - pixels[index].b);
+
+                // while only color is needed, brightness is kept as it helpful in 
+                // certain low quality cameras that muddy the colors
 
                 // Debug.Log("old_level: " +old_avg + " new_level: " + new_avg + " difference: " +  difference);
 
@@ -210,41 +215,31 @@ public class Butterfly_Mover : MonoBehaviour
                 // int total = pixels[index].r + pixels[index].g + pixels[index].b;
 
                 // draws a red circle just in case
-                pixels[index].r = 255;
-                pixels[index].b = 0;
-                pixels[index].g = 0;
+                // pixels[index].r = 255;
+                // pixels[index].b = 0;
+                // pixels[index].g = 0;
+
                 // Debug.Log("has brightnes: " + new_total);
 
-                if (red_diff > threshold || green_diff > threshold || blue_diff > threshold)
+                if (difference > threshold || red_diff > threshold || green_diff > threshold || blue_diff > threshold)
                 {
                     // Debug.Log("has brightnes: " + pts + " index: " + index);
                     // Debug.Log("has brightnes: " + total);
 
-                    // Push in the opposite direction
+
+                    // finds x and y of the current "hand" position
                     float new_x = (float)check_col/width * (max_offset_x *2) - max_offset_x;
                     float new_y = (float)check_row/height * (max_offset_y * 2) - max_offset_y;
 
-
+                    // calculates hand and normalizes x and y
                     Vector3 hand_pos = new Vector3(new_x / offset_radius, new_y / offset_radius, 0);
                     // Debug.Log("hand_pos:" + hand_pos.x + " " + hand_pos.y);
+                    
+                    // push in opposite direction of hand
                     Vector3 direction = butterfly.transform.position - hand_pos;
                     Vector3 new_position = butterfly.transform.position + direction * speed * Time.deltaTime;
-                    // if (new_position.x > (max_offset_x - offset_radius_x))
-                    // {
-                    //     new_position.x = max_offset_x - offset_radius_x;
-                    // }
-                    // if (new_position.x < ((max_offset_x - offset_radius_x) * -1))
-                    // {
-                    //     new_position.x = (max_offset_x - offset_radius_x) * -1;
-                    // }
-                    // if (new_position.y > max_offset_y - offset_radius_y)
-                    // {
-                    //     new_position.y = max_offset_y - offset_radius_y;
-                    // }
-                    // if (new_position.y < ((max_offset_y -offset_radius_y) * -1))
-                    // {
-                    //     new_position.y = (max_offset_y-offset_radius_y) * -1;
-                    // }
+
+                    // forces it to not go out of bounds of screen
                     if (new_position.x > (max_offset_x - offset_radius))
                     {
                         new_position.x = max_offset_x - offset_radius;
@@ -275,6 +270,9 @@ public class Butterfly_Mover : MonoBehaviour
 
             // pixels = old_pixels;
         }
+
+        // if the pixel is NOT updated, it's important to still make sure that the butterfly 
+        // does not BOUNCE (due to wall interactions) out of frame
         else
         {
             Vector3 new_position = butterfly.transform.position;
@@ -300,6 +298,7 @@ public class Butterfly_Mover : MonoBehaviour
         }
     }
 
+    // flips the camera for easier game play
     void Flip_Camera(Color32[] pixel)
     {
         for (int c = 0; c < cam.height; c++)
@@ -314,6 +313,8 @@ public class Butterfly_Mover : MonoBehaviour
         }
     }
 
+
+    // when changing scenes, it's important to stop camera, otherwise it freezes
     private void ChangedActiveScene(Scene current, Scene next)
     {
         cam.Stop();
