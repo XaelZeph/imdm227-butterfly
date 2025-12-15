@@ -28,6 +28,7 @@ public class CollisionControl : MonoBehaviour
         
         source = GetComponent<AudioSource>();
         canvas.SetActive(false);
+        //get initial butterfly position
         startX = transform.position.x;
         startY = transform.position.y;
         startZ = transform.position.z;
@@ -36,11 +37,10 @@ public class CollisionControl : MonoBehaviour
 
     void OnCollisionEnter(Collision other)
     {
-        //Debug.Log("hit");
-        if (other.gameObject.tag == "Win")
+        if (other.gameObject.tag == "Win")  //check if butterfly collided with win object
         {
             source.PlayOneShot(win, 1.0f);
-            if (SceneManager.GetActiveScene().buildIndex + 1 < SceneManager.sceneCountInBuildSettings)
+            if (SceneManager.GetActiveScene().buildIndex + 1 < SceneManager.sceneCountInBuildSettings)  //check if there is a next scene available
             {
                 //change scene
                 SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
@@ -53,20 +53,21 @@ public class CollisionControl : MonoBehaviour
                 //for this to work you need to add the scenes to the current build,
                 //make sure the maze levels are in order because this triggers the 
                 //scene with the next index to appear
-                canvas.SetActive(true);
+                canvas.SetActive(true);  //show win screen
             }
 
         }
 
-        if (other.gameObject.tag == "Spike" || other.gameObject.tag == "Enemy")
+        if (other.gameObject.tag == "Spike" || other.gameObject.tag == "Enemy")  //UNUSED:  for enemy/spike collisions, reset position
         {
             //level fail, reset position
             transform.position = new Vector3(startX, startY, startZ); 
 
         }
 
-        if (other.gameObject.tag == "wall")
+        if (other.gameObject.tag == "wall")  //check if butterfly collided with wall
         {
+            //play a random hit sound
             int rand = Random.Range(1, 5); 
             if (rand == 1)
             {
